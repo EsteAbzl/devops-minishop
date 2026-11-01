@@ -27,6 +27,7 @@ from fastapi import Body, FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 from starlette.middleware.sessions import SessionMiddleware
 from ipaddress import IPv4Address
 from pydantic import BaseModel
@@ -137,7 +138,7 @@ async def handle_error(request: Request, exc: Exception):
     
     # L'option exc_info=True capture et écrit automatiquement la stack trace complète dans les logs
     log.error(
-        f"Exception non gérée détectée sur l'endpoint [{request_details}] - Erreur: {str(exc)}", 
+        f"Exception non gérée détectée sur l'endpoint [{request_details}]", 
         exc_info=True
     )
 
@@ -149,6 +150,10 @@ async def handle_error(request: Request, exc: Exception):
         }
     )
 
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    errors = [{"loc": e["loc"], "msg": e["msg"]} for e in exc.errors()]  # sans "input"
+    return JSONResponse(status_code=422, content={"detail": errors})
 
 @app.get("/health")
 def health():
