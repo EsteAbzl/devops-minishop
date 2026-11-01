@@ -43,10 +43,15 @@ DB_PATH = os.environ.get("DB_PATH", "shop.db")
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 AWS_KEY = os.environ.get("AWS_KEY")
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.CRITICAL)
 log = logging.getLogger("minishop")
 
-app = FastAPI(title="MiniShop", debug=False)
+app = FastAPI(
+    title="MiniShop", 
+    debug=False, 
+    docs_url = None,
+    redoc_url = None,
+    openapi_url = None)
 app.add_middleware(
     SessionMiddleware, 
     secret_key=SECRET_KEY, 
@@ -274,4 +279,4 @@ def boom():
 
 if __name__ == "__main__":
     init_db()
-    uvicorn.run("app:app", host="0.0.0.0", port=5000, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=5000, reload=False)
