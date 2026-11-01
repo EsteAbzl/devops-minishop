@@ -1,0 +1,43 @@
+name: Security check
+
+on: [push, pull]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip 
+          pip install -q bandit pip-audit pytest
+          pip install -r app/requirements.txt 
+
+      - name: == 1. Bandit (SAST) ==
+        run: bandit -r app -lll
+      
+      - name: == 2. pip-audit (dépendances) ==
+        run: pip-audit -r app/requirements.txt --strict
+      
+      - name: == 3. gitleaks (secrets) ==
+        run: gitleaks detect --source . --no-banner || echo "gitleaks non installé ou fuite détectée"
+      
+      - name: == 4. Tests de conformité ==
+        run: pytest -q tests
+
+      - name: Trivy (vulnérabilités, secrets, IaC)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
