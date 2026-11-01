@@ -26,6 +26,7 @@ import yaml
 from fastapi import Body, FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from ipaddress import IPv4Address
 from pydantic import BaseModel
@@ -89,6 +90,40 @@ def init_db():
     conn.commit()
     conn.close()
 
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    # 1. Laisse FastAPI traiter la requête et générer la réponse initiale
+    response = await call_next(request)
+    
+    # 2. Injection des en-têtes de sécurité sur la réponse sortante
+    
+    # Empêche le Clickjacking en interdisant l'affichage du site dans un <iframe|frame|object>
+    response.headers["X-Frame-Options"] = "DENY"
+    
+    # Force le navigateur à respecter scrupuleusement les types MIME déclarés (Bloque le reniflage/sniffing de scripts)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    
+    # HSTS (Strict-Transport-Security) : Force les connexions HTTPS futures.
+    # max-age=31536000 équivaut à 1 an. includeSubDomains applique la règle aux sous-domaines.
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    
+    # CSP (Content Security Policy) de base et robuste : 
+    # - Bloque le chargement de scripts extérieurs non explicitement autorisés.
+    # - Idéal pour travailler de pair avec vos templates Jinja2 auto-échappés.
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self'; "
+        "img-src 'self' data:; "
+        "frame-ancestors 'none'; "
+        "upgrade-insecure-requests;"
+    )
+    
+    # En-tête additionnel moderne protégeant la vie privée (ne transmet pas le référent vers l'extérieur)
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+    return response
 
 @app.exception_handler(Exception)
 async def handle_error(request: Request, exc: Exception):
