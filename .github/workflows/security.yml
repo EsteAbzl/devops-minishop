@@ -45,6 +45,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # historique complet
+      - uses: gitleaks/gitleaks-action@v2
 
       - run: gitleaks detect --source . --no-banner || echo "gitleaks non installé ou fuite détectée"
 
@@ -61,17 +64,18 @@ jobs:
           python-version: '3.12'
       
       - run: pip install pytest 
-#      - run: pip install -r app/requirements.txt 
+      - run: pip install -r app/requirements.txt 
 
       - run: pytest -q tests
 
 
   trivy:
-    name: Trivy (vulnérabilités, secrets, IaC)
+    name: == 5. Trivy (vulnérabilités, secrets, IaC) ==
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.35.0
+      
         with:
           scan-type: fs
           scan-ref: .
