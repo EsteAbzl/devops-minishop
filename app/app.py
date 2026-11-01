@@ -15,11 +15,13 @@ import traceback
 import ast
 
 import pathlib
+import urllib
+from urllib.parse import urlparse
 
 import requests
 import uvicorn
 import yaml
-from fastapi import Body, FastAPI, Request
+from fastapi import Body, FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from starlette.middleware.sessions import SessionMiddleware
@@ -154,10 +156,13 @@ class Profile(BaseModel):
 async def import_profile(request: Profile):
     return {"profile": str(request)}
 
-
+ALLOWED = {"youtube.com"}
 @app.get("/fetch")
 def fetch(url: str):
-    r = requests.get(url, verify=False)
+    u = urlparse(url)
+    if u.scheme != "https" or u.hostname not in ALLOWED:
+        raise HTTPException(status_code=400)
+    r = requests.get(url, timeout=5, allow_redirects=False, verify=True)
     return PlainTextResponse(r.text[:500])
 
 
