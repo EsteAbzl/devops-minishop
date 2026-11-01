@@ -7,15 +7,18 @@ on:
     - cron: "0 3 * * *" # tous les jours à 03:00 UTC
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   bandit:
     name: == 1. Bandit (SAST) ==
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
       
@@ -28,10 +31,10 @@ jobs:
     name: == 2. pip-audit (dépendances) ==
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
       
@@ -44,10 +47,10 @@ jobs:
     name: == 3. gitleaks (secrets) ==
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0 # historique complet
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc # v2
 
       - run: gitleaks detect --source . --no-banner || echo "gitleaks non installé ou fuite détectée"
 
@@ -56,10 +59,10 @@ jobs:
     name: == 4. Tests de conformité ==
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
       
@@ -67,9 +70,6 @@ jobs:
         run: | 
           pip install pytest
           pip install -r app/requirements.txt   
-
-#      - name: lancement de l'app 
-#        run: cd app && python app.py 
 
       - name: lancement des tests
         run: pytest -q tests
@@ -79,8 +79,8 @@ jobs:
     name: == 5. Trivy (vulnérabilités, secrets, IaC) ==
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@v0.35.0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
       
         with:
           scan-type: fs
