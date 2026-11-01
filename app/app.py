@@ -113,6 +113,7 @@ def login(request: Request, data: dict = Body(...)):
         ph.verify(row["password"],data["password"])
         request.session["user_id"] = row["id"]
         request.session["token"] = secrets.token_hex(32)
+        request.session["is_admin"] = row["is_admin"]
         return {"status": "logged in", "user": row["username"]}
     except (Exception):
         return JSONResponse({"error": "bad credentials"}, status_code=401)
@@ -199,6 +200,8 @@ def invoice(invoice_id: int, request: Request):
 def admin_users(request: Request):
     if "user_id" not in request.session:
         return JSONResponse({"error": "login required"}, status_code=401)
+    if request.session["is_admin"] == 0:
+        return JSONResponse({"error": "permission denied"}, status_code=403)
     rows = db().execute("SELECT id, username, is_admin FROM users").fetchall()
     return [dict(r) for r in rows]
 
@@ -207,6 +210,8 @@ def admin_users(request: Request):
 def delete_user(user_id: int, request: Request):
     if "user_id" not in request.session:
         return JSONResponse({"error": "login required"}, status_code=401)
+    if request.session["is_admin"] == 0:
+            return JSONResponse({"error": "permission denied"}, status_code=403)
     conn = db()
     conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
