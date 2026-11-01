@@ -6,6 +6,7 @@ Documentation interactive : http://localhost:5000/docs
 import base64
 import hashlib
 import logging
+import secrets
 import os
 import dotenv
 import pickle
@@ -45,7 +46,12 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger("minishop")
 
 app = FastAPI(title="MiniShop", debug=True)
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY) 
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=SECRET_KEY, 
+    session_cookie="session", 
+    same_site="lax",
+    https_only=True) 
 
 
 def db(): 
@@ -106,7 +112,7 @@ def login(request: Request, data: dict = Body(...)):
     try:
         ph.verify(row["password"],data["password"])
         request.session["user_id"] = row["id"]
-        request.session["token"] = str(random.randint(0, 10**6))
+        request.session["token"] = secrets.token_hex(32)
         return {"status": "logged in", "user": row["username"]}
     except (Exception):
         return JSONResponse({"error": "bad credentials"}, status_code=401)
