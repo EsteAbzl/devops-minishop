@@ -8,41 +8,76 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  bandit:
+    name: == 1. Bandit (SAST) ==
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
       
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip 
-          pip install -q bandit pip-audit pytest
-          pip install -r app/requirements.txt 
+      - run: pip install bandit 
 
-      - name: == 1. Bandit (SAST) ==
-        run: bandit -r app -lll
-      
-      - name: == 2. pip-audit (dépendances) ==
-        run: pip-audit -r app/requirements.txt --strict
-      
-      - name: == 3. gitleaks (secrets) ==
-        run: gitleaks detect --source . --no-banner || echo "gitleaks non installé ou fuite détectée"
-      
-      - name: == 4. Tests de conformité ==
-        run: pytest -q tests
+      - run: bandit -r app -lll
 
-#      - name: Trivy (vulnérabilités, secrets, IaC)
-#        uses: aquasecurity/trivy-action@0.28.0
-#        with:
-#          scan-type: fs
-#          scan-ref: .
-#          scanners: vuln,secret,misconfig
-#          severity: HIGH,CRITICAL
-#          ignore-unfixed: true
-#          exit-code: "1"
-#          format: table
+
+  pip-audit:
+    name: == 2. pip-audit (dépendances) ==
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - run: pip install pip-audit 
+
+      - run: pip-audit -r app/requirements.txt --strict
+
+
+  gitleaks:
+    name: == 3. gitleaks (secrets) ==
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: gitleaks detect --source . --no-banner || echo "gitleaks non installé ou fuite détectée"
+
+
+pytest:
+  bandit:
+    name: == 4. Tests de conformité ==
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - run: pip install pytest 
+#      - run: pip install -r app/requirements.txt 
+
+      - run: pytest -q tests
+
+
+  trivy:
+    name: Trivy (vulnérabilités, secrets, IaC)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
