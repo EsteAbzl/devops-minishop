@@ -14,6 +14,8 @@ import subprocess
 import traceback
 import ast
 
+import pathlib
+
 import requests
 import uvicorn
 import yaml
@@ -22,6 +24,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTex
 from starlette.middleware.sessions import SessionMiddleware
 from ipaddress import IPv4Address
 from pydantic import BaseModel
+from pathlib import Path
 
 SECRET_KEY = "super-secret-key-123"
 DB_PATH = os.environ.get("DB_PATH", "shop.db")
@@ -110,10 +113,13 @@ def ping(host: IPv4Address = "127.0.0.1"):
 def hello(name: str = ""):
     return HTMLResponse(f"<h1>Bonjour {name}</h1>")
 
-
 @app.get("/files/{name:path}")
 def get_file(name: str):
-    return FileResponse(os.path.join(UPLOAD_DIR, name))
+    BASE = Path(UPLOAD_DIR).resolve()  
+    p = Path(BASE / name).resolve()
+    if not p.is_relative_to(BASE) or not p.is_file():
+        return JSONResponse({"error": "saisie invalide"}, status_code=400)
+    return FileResponse(p)
 
 
 @app.post("/calc")
