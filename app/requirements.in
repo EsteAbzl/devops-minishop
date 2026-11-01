@@ -8,3 +8,4 @@ requests>=2.33.0
 PyYAML>=6.0.1
 jinja2
 python-dotenv
+argon2-cffi

@@ -30,6 +30,9 @@ from ipaddress import IPv4Address
 from pydantic import BaseModel
 from pathlib import Path
 from dotenv import load_dotenv
+from argon2 import PasswordHasher
+
+ph = PasswordHasher()
 
 load_dotenv()
 
@@ -51,8 +54,8 @@ def db():
     return conn
 
 
-def md5(value):
-    return hashlib.md5(value.encode()).hexdigest()
+def argon2_hash(value):
+    return ph.hash(value)
 
 
 def init_db():
@@ -70,9 +73,9 @@ def init_db():
         """
     )
     conn.execute("INSERT INTO users (username, password, is_admin) VALUES (?, ?, 1)",
-                 ("admin", md5("admin123")))
-    conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("alice", md5("alice123")))
-    conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("bob", md5("bob123")))
+                 ("admin", argon2_hash("admin123")))
+    conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("alice", argon2_hash("alice123")))
+    conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("bob", argon2_hash("bob123")))
     conn.executemany("INSERT INTO products (name, price) VALUES (?, ?)",
                      [("apple", 1.2), ("banana", 0.8), ("cherry", 3.5)])
     conn.executemany("INSERT INTO invoices (owner_id, label, amount) VALUES (?, ?, ?)",
@@ -95,13 +98,18 @@ def health():
 def login(request: Request, data: dict = Body(...)):
     username, password = data["username"], data["password"]
     log.info(f"login attempt user={username}")
-    sql = f"SELECT * FROM users WHERE username= ? AND password= ?"
-    row = db().execute(sql, (f"{username}", f"{md5(password)}"),).fetchone()
+    sql = f"SELECT * FROM users WHERE username= ?"
+    row = db().execute(sql, (f"{username}",),).fetchone()
     if not row:
         return JSONResponse({"error": "bad credentials"}, status_code=401)
-    request.session["user_id"] = row["id"]
-    request.session["token"] = str(random.randint(0, 10**6))
-    return {"status": "logged in", "user": row["username"]}
+
+    try:
+        ph.verify(row["password"],data["password"])
+        request.session["user_id"] = row["id"]
+        request.session["token"] = str(random.randint(0, 10**6))
+        return {"status": "logged in", "user": row["username"]}
+    except (Exception):
+        return JSONResponse({"error": "bad credentials"}, status_code=401)
 
 
 @app.get("/search")
@@ -122,8 +130,6 @@ def hello(request: Request, name: str = ""):
     response = templates.TemplateResponse(name="hello.html", request=request, context={"name": name})
     print(response)
     return response
-    # except(Exception) as e:
-    #    return JSONResponse({"error": "internal error"}, status_code=500)
 
 @app.get("/files/{name:path}")
 def get_file(name: str):
