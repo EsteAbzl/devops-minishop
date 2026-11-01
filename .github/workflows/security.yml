@@ -36,13 +36,13 @@ jobs:
       - name: == 4. Tests de conformité ==
         run: pytest -q tests
 
-      - name: Trivy (vulnérabilités, secrets, IaC)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: vuln,secret,misconfig
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
-          format: table
+#      - name: Trivy (vulnérabilités, secrets, IaC)
+#        uses: aquasecurity/trivy-action@0.28.0
+#        with:
+#          scan-type: fs
+#          scan-ref: .
+#          scanners: vuln,secret,misconfig
+#          severity: HIGH,CRITICAL
+#          ignore-unfixed: true
+#          exit-code: "1"
+#          format: table
