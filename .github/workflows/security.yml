@@ -63,10 +63,16 @@ jobs:
         with:
           python-version: '3.12'
       
-      - run: pip install pytest 
-      - run: pip install -r app/requirements.txt 
+      - name: dependances
+        run: | 
+          pip install pytest 
+          pip install -r app/requirements.txt 
 
-      - run: pytest -q tests
+      - name: lancement de l'app 
+        run: cd app && python app.py 
+
+      - name: lancement des tests
+        run: pytest -q tests
 
 
   trivy:
@@ -74,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@v0.35.0
+      - uses: aquasecurity/trivy-action@v0.72.0
       
         with:
           scan-type: fs
