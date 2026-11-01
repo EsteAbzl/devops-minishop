@@ -65,7 +65,8 @@ jobs:
       
       - name: dependances
         run: | 
-          pip install -r app/requirements.txt pytest  
+          pip install pytest
+          pip install -r app/requirements.txt   
 
 #      - name: lancement de l'app 
 #        run: cd app && python app.py 
