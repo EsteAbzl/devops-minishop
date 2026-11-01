@@ -7,6 +7,7 @@ import base64
 import hashlib
 import logging
 import os
+import dotenv
 import pickle
 import random
 import sqlite3
@@ -28,12 +29,15 @@ from starlette.middleware.sessions import SessionMiddleware
 from ipaddress import IPv4Address
 from pydantic import BaseModel
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()
 
-SECRET_KEY = "super-secret-key-123"
+SECRET_KEY = os.environ.get("SECRET_KEY")
 DB_PATH = os.environ.get("DB_PATH", "shop.db")
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
-AWS_KEY = "AKIAIOSFODNN7EXAMPLE"
+AWS_KEY = os.environ.get("AWS_KEY")
+print("sk", SECRET_KEY, AWS_KEY)
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger("minishop")
@@ -42,7 +46,7 @@ app = FastAPI(title="MiniShop", debug=True)
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 
-def db():
+def db(): 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
