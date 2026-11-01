@@ -49,8 +49,7 @@ jobs:
       - run: gitleaks detect --source . --no-banner || echo "gitleaks non installé ou fuite détectée"
 
 
-pytest:
-  bandit:
+  pytest:
     name: == 4. Tests de conformité ==
     runs-on: ubuntu-latest
     steps:
