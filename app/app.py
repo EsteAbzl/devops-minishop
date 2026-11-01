@@ -37,13 +37,12 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 DB_PATH = os.environ.get("DB_PATH", "shop.db")
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 AWS_KEY = os.environ.get("AWS_KEY")
-print("sk", SECRET_KEY, AWS_KEY)
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger("minishop")
 
 app = FastAPI(title="MiniShop", debug=True)
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY) 
 
 
 def db(): 
@@ -95,7 +94,7 @@ def health():
 @app.post("/login")
 def login(request: Request, data: dict = Body(...)):
     username, password = data["username"], data["password"]
-    log.info(f"login attempt user={username} password={password}")
+    log.info(f"login attempt user={username}")
     sql = f"SELECT * FROM users WHERE username= ? AND password= ?"
     row = db().execute(sql, (f"{username}", f"{md5(password)}"),).fetchone()
     if not row:
