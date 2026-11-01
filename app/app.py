@@ -12,6 +12,7 @@ import random
 import sqlite3
 import subprocess
 import traceback
+import ast
 
 import requests
 import uvicorn
@@ -116,7 +117,10 @@ def get_file(name: str):
 
 @app.post("/calc")
 def calc(data: dict = Body(...)):
-    return {"result": str(eval(data["expr"]))}
+    try:
+        return {"result": ast.literal_eval(data["expr"])}
+    except(Exception) as e:
+        return JSONResponse({"error": "demande invalide"}, status_code=400)
 
 
 @app.post("/import-yaml")
