@@ -20,11 +20,13 @@ import requests
 import uvicorn
 import yaml
 from fastapi import Body, FastAPI, Request
+from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from starlette.middleware.sessions import SessionMiddleware
 from ipaddress import IPv4Address
 from pydantic import BaseModel
 from pathlib import Path
+
 
 SECRET_KEY = "super-secret-key-123"
 DB_PATH = os.environ.get("DB_PATH", "shop.db")
@@ -108,10 +110,15 @@ def ping(host: IPv4Address = "127.0.0.1"):
     out = subprocess.run(["ping", "-c", "1", str(host)], check=True, timeout=5, capture_output=True, text=True)
     return PlainTextResponse(out.stdout + out.stderr)
 
-
+templates = Jinja2Templates(directory="templates")
 @app.get("/hello")
-def hello(name: str = ""):
-    return HTMLResponse(f"<h1>Bonjour {name}</h1>")
+def hello(request: Request, name: str = ""):
+    print(f"name : {name}")
+    response = templates.TemplateResponse(name="hello.html", request=request, context={"name": name})
+    print(response)
+    return response
+    # except(Exception) as e:
+    #    return JSONResponse({"error": "internal error"}, status_code=500)
 
 @app.get("/files/{name:path}")
 def get_file(name: str):
