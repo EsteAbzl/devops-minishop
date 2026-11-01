@@ -46,7 +46,7 @@ AWS_KEY = os.environ.get("AWS_KEY")
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger("minishop")
 
-app = FastAPI(title="MiniShop", debug=True)
+app = FastAPI(title="MiniShop", debug=False)
 app.add_middleware(
     SessionMiddleware, 
     secret_key=SECRET_KEY, 
@@ -127,7 +127,22 @@ async def add_security_headers(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def handle_error(request: Request, exc: Exception):
-    return HTMLResponse("<pre>" + traceback.format_exc() + "</pre>", status_code=500)
+    # Récupération de détails utiles sur le contexte de la requête pour faciliter le debug
+    request_details = f"Method: {request.method} | URL: {request.url}"
+    
+    # L'option exc_info=True capture et écrit automatiquement la stack trace complète dans les logs
+    log.error(
+        f"Exception non gérée détectée sur l'endpoint [{request_details}] - Erreur: {str(exc)}", 
+        exc_info=True
+    )
+
+    # Réponse HTTP 500 anonymisée envoyée au client
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Une erreur interne est survenue."
+        }
+    )
 
 
 @app.get("/health")
@@ -224,7 +239,6 @@ def fetch(url: str):
 def invoice(invoice_id: int, request: Request):
     if "user_id" not in request.session:
         return JSONResponse({"error": "login required"}, status_code=401)
-    print(f"debug {invoice_id}, {request.session["user_id"]}")
     row = db().execute("SELECT * FROM invoices WHERE id = ? AND owner_id = ?", (invoice_id, request.session["user_id"],)).fetchone()
     if not row:
         return JSONResponse({"error": "not found"}, status_code=404)
