@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # 1. Écosystème GitHub Actions 
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Force Dependabot à conserver et mettre à jour les commits SHA tout en incrémentant le commentaire du tag
+    pin-digests: true
+
+  # 2. Écosystème Pip (Python)
+  - package-ecosystem: "pip"
+    directory: "/app" 
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # 3. Écosystème Docker
+  - package-ecosystem: "docker"
+    directory: "/app" 
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
