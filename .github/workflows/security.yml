@@ -67,8 +67,8 @@ jobs:
         run: | 
           pip install -r app/requirements.txt pytest  
 
-      - name: lancement de l'app 
-        run: cd app && python app.py 
+#      - name: lancement de l'app 
+#        run: cd app && python app.py 
 
       - name: lancement des tests
         run: pytest -q tests
