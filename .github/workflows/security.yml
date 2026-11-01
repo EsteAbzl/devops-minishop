@@ -65,8 +65,7 @@ jobs:
       
       - name: dependances
         run: | 
-          pip install pytest 
-          pip install -r app/requirements.txt 
+          pip install -r app/requirements.txt pytest  
 
       - name: lancement de l'app 
         run: cd app && python app.py 
@@ -80,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aquasecurity/trivy-action@v0.72.0
+      - uses: aquasecurity/trivy-action@v0.35.0
       
         with:
           scan-type: fs
